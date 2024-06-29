@@ -1,7 +1,5 @@
 ﻿using Lab13.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Lab13.Models;
 using Lab13.Models.Request;
 
 namespace Lab13.Controllers
@@ -16,7 +14,7 @@ namespace Lab13.Controllers
             _context = context;
         }
 
-        [HttpPost]
+        [HttpPost("InsertInvoice")]
         public async Task<ActionResult<Invoices>> InsertInvoice([FromBody] InvoicesRequest5 invoicesRequest5)
         {
             var customer = await _context.Customers.FindAsync(invoicesRequest5.CustomersID);
@@ -39,7 +37,8 @@ namespace Lab13.Controllers
             return CreatedAtAction(nameof(InsertInvoice), new { id = invoices.InvoicesID }, invoices);
         }
 
-        [HttpPost]
+
+        [HttpPost("InsertInvoiceList")]
         public async Task<ActionResult<List<Invoices>>> InsertInvoiceList([FromBody] InvoicesRequest8 invoicesRequest8)
         {
             try
@@ -62,7 +61,7 @@ namespace Lab13.Controllers
                 _context.Invoices.AddRange(invoiceList);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("InsertInvoiceList", new { message = "Invoices inserted correctly" }, invoiceList);
+                return CreatedAtAction(nameof(InsertInvoiceList), new { message = "Invoices inserted correctly" }, invoiceList);
             }
             catch (Exception ex)
             {
@@ -70,6 +69,56 @@ namespace Lab13.Controllers
             }
         }
 
+        [HttpPost("InsertInvoiceDetail")]
+        public async Task<ActionResult<List<Details>>> InsertInvoiceDetail([FromBody] InvoicesRequest10 invoicesRequest10)
+        {
+            try
+            {
+                var invoice = await _context.Invoices.FindAsync(invoicesRequest10.InvoicesID);
+
+                if (invoice == null)
+                {
+                    return NotFound(new { message = "Invoice not found" });
+                }
+
+                var details = invoicesRequest10.InvoiceDetail.ToList();
+                List<Details> newDetails = new();
+
+                foreach (var invoiceDetail in details)
+                {
+                    Details detail = new()
+                    {
+                        InvoicesID = invoice.InvoicesID
+                    };
+
+                    int idProduct = invoiceDetail.ProductsID;
+                    var product = await _context.Products.FindAsync(idProduct);
+
+                    if (product == null)
+                    {
+                        return Problem(detail: "Product not found", title: "An error occurred while inserting invoice details");
+                    }
+
+                    detail.ProductsID = invoiceDetail.ProductsID;
+                    detail.Price = product.Price;
+                    detail.Amount = invoiceDetail.Amount;
+                    detail.Subtotal = detail.Amount * detail.Price;
+
+                    _context.Details.Add(detail);
+                    newDetails.Add(detail);
+                    invoice.Total += detail.Subtotal;
+                }
+
+                _context.Invoices.Update(invoice);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(InsertInvoiceDetail), new { id = invoice.InvoicesID }, newDetails);
+            }
+            catch (Exception ex)
+            {
+                return Problem(detail: ex.Message, title: "An error occurred while inserting invoice details");
+            }
+        }
 
     }
 }

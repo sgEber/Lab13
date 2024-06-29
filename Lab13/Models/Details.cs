@@ -4,7 +4,7 @@
     {
         public int DetailsID { get; set; }
         public Invoices Invoice { get; set; }
-        public int InovicesID { get; set; }
+        public int InvoicesID { get; set; }
         public Products Product { get; set; }
         public int ProductsID { get; set; }
         public int Amount { get; set; }

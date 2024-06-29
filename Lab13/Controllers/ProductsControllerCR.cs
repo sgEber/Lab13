@@ -33,7 +33,7 @@ namespace Lab13.Controllers
             return CreatedAtAction("InsertProduct", new { id = products.ProductsID }, products);
         }
 
-        [HttpDelete]
+        [HttpDelete("DeleteProduct")]
         public async Task<IActionResult> DeleteProduct([FromBody] ProductRequest2 requestProduct)
         {
             var id = requestProduct.ProductID;
@@ -71,6 +71,30 @@ namespace Lab13.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("UpdateProductPrice", new { id = products.ProductsID }, products);
+        }
+
+        [HttpDelete("DeleteProductList")]
+        public async Task<IActionResult> DeleteProductList(List<ProductRequest2> productrequest2)
+        {
+
+            if (_context.Products == null)
+            {
+                return NotFound();
+            }
+
+            foreach (var productID in productrequest2)
+            {
+                var product = await _context.Products.FindAsync(productID.ProductID);
+                if (product == null)
+                {
+                    return NotFound();
+                }
+                _context.Products.Remove(product);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

@@ -82,5 +82,23 @@ namespace Lab13.Controllers
 
             return NoContent();
         }
+
+
+        [HttpPost("RequestPostCustomer")]
+        public async Task<ActionResult<Customers>> PostCustomer(Customers model)
+        {
+            var newCustomer = new Customers
+            {
+                FirstName = model.FirstName,
+                lAstName = model.lAstName,
+                DocumentNumber = model.DocumentNumber
+            };
+
+            _context.Customers.Add(newCustomer);
+            await _context.SaveChangesAsync();
+
+
+            return CreatedAtAction("GetCustomers", new { id = newCustomer.CustomersID }, newCustomer);
+        }
     }
 }
